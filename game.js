@@ -97,7 +97,7 @@
     // 以前よりさらに約5ブロック分広いプレイ空間を確保する。
     // 低い画面ではブロックだけを少し薄くして、距離を優先する。
     const top = Math.max(8, Math.min(24, cssH * 0.035));
-    const desiredPlaySpace = Math.max(145, Math.min(195, cssH * 0.56));
+    const desiredPlaySpace = Math.max(165, Math.min(215, cssH * 0.62));
     const heightForBricks =
       paddle.y - top - desiredPlaySpace - gap * (rows - 1);
     const bh = Math.max(8, Math.min(24, heightForBricks / rows));
