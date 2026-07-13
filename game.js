@@ -73,7 +73,7 @@
 
     paddle.w = cssW * DIFFICULTIES[selectedDifficulty].paddle;
     paddle.h = Math.max(11, cssH * 0.018);
-    paddle.y = cssH - Math.max(42, cssH * 0.065);
+    paddle.y = cssH - Math.max(38, cssH * 0.055);
     paddle.x = Math.min(paddle.x || (cssW - paddle.w) / 2, cssW - paddle.w);
     paddle.targetX = paddle.x;
     ball.r = Math.max(6, cssW * 0.018);
@@ -87,9 +87,9 @@
     const rows = 5;
     const side = Math.max(12, cssW * 0.032);
     const gap = Math.max(4, cssW * 0.012);
-    const top = Math.max(72, cssH * 0.105);
+    const top = Math.max(66, cssH * 0.085);
     const bw = (cssW - side * 2 - gap * (cols - 1)) / cols;
-    const bh = Math.max(18, Math.min(31, cssH * 0.042));
+    const bh = Math.max(17, Math.min(28, cssH * 0.036));
 
     const patterns = [
       () => true,
@@ -271,12 +271,15 @@
   }
 
   function addParticles(x, y, color) {
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 14; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 70 + Math.random() * 190;
       particles.push({
         x, y,
-        vx: (Math.random() - 0.5) * 150,
-        vy: (Math.random() - 0.5) * 150,
-        life: 0.35 + Math.random() * 0.2,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0.42 + Math.random() * 0.34,
+        size: 1.8 + Math.random() * 3.2,
         color
       });
     }
@@ -397,20 +400,63 @@
   function draw() {
     ctx.clearRect(0, 0, cssW, cssH);
 
+    const themeIndex = Math.min(5, Math.floor((level - 1) / 2));
+    const themes = [
+      ["#0b1630", "#030814", "#7dd3fc"],
+      ["#17112f", "#070612", "#c084fc"],
+      ["#23160d", "#080706", "#fbbf24"],
+      ["#10241f", "#040a08", "#34d399"],
+      ["#26101f", "#090409", "#fb7185"],
+      ["#1a1d26", "#030406", "#e5e7eb"]
+    ];
+    const [topColor, bottomColor, accentColor] = themes[themeIndex];
+
     const bg = ctx.createLinearGradient(0, 0, 0, cssH);
-    bg.addColorStop(0, "rgba(14, 24, 48, 0.98)");
-    bg.addColorStop(1, "rgba(3, 8, 20, 1)");
+    bg.addColorStop(0, topColor);
+    bg.addColorStop(0.55, bottomColor);
+    bg.addColorStop(1, "#010205");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, cssW, cssH);
 
-    ctx.globalAlpha = 0.16;
-    ctx.strokeStyle = "#7dd3fc";
+    const glow = ctx.createRadialGradient(
+      cssW * 0.5, cssH * 0.18, 0,
+      cssW * 0.5, cssH * 0.18, cssW * 0.8
+    );
+    glow.addColorStop(0, accentColor + "35");
+    glow.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, cssW, cssH);
+
+    ctx.globalAlpha = 0.12 + themeIndex * 0.015;
+    ctx.strokeStyle = accentColor;
     ctx.lineWidth = 1;
-    for (let y = 50; y < cssH; y += 42) {
+    for (let y = 52; y < cssH; y += 44) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(cssW, y);
       ctx.stroke();
+    }
+
+    if (themeIndex >= 1) {
+      ctx.globalAlpha = 0.08 + themeIndex * 0.012;
+      for (let x = -cssH; x < cssW + cssH; x += 54) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + cssH, cssH);
+        ctx.stroke();
+      }
+    }
+
+    if (themeIndex >= 2) {
+      ctx.globalAlpha = 0.14;
+      for (let i = 0; i < 18 + themeIndex * 4; i++) {
+        const sx = (i * 83 + level * 29) % cssW;
+        const sy = (i * 137 + level * 41) % cssH;
+        ctx.fillStyle = i % 3 === 0 ? "#ffffff" : accentColor;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 0.7 + (i % 3) * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
     ctx.globalAlpha = 1;
 
@@ -458,12 +504,15 @@
     ctx.shadowBlur = 0;
 
     for (const p of particles) {
-      ctx.globalAlpha = Math.max(0, p.life * 2.5);
+      ctx.globalAlpha = Math.max(0, p.life * 2.2);
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 12;
       ctx.fillStyle = p.color;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, p.size || 2.2, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
   }
 
