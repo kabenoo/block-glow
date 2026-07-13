@@ -73,7 +73,7 @@
 
     paddle.w = cssW * DIFFICULTIES[selectedDifficulty].paddle;
     paddle.h = Math.max(11, cssH * 0.018);
-    paddle.y = cssH - Math.max(38, cssH * 0.055);
+    paddle.y = cssH - Math.max(30, cssH * 0.045);
     paddle.x = Math.min(paddle.x || (cssW - paddle.w) / 2, cssW - paddle.w);
     paddle.targetX = paddle.x;
     ball.r = Math.max(6, cssW * 0.018);
@@ -87,7 +87,7 @@
     const rows = 5;
     const side = Math.max(12, cssW * 0.032);
     const gap = Math.max(4, cssW * 0.012);
-    const top = Math.max(66, cssH * 0.085);
+    const top = Math.max(54, cssH * 0.070);
     const bw = (cssW - side * 2 - gap * (cols - 1)) / cols;
     const bh = Math.max(17, Math.min(28, cssH * 0.036));
 
