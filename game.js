@@ -73,7 +73,11 @@
 
     paddle.w = cssW * DIFFICULTIES[selectedDifficulty].paddle;
     paddle.h = Math.max(11, cssH * 0.018);
-    paddle.y = cssH - Math.max(30, cssH * 0.045);
+
+    // バーをプレイ領域の最下部近くに配置する。
+    // y はバー上端なので、下端の余白とバー自体の高さを差し引く。
+    const paddleBottomMargin = Math.max(5, cssH * 0.018);
+    paddle.y = cssH - paddle.h - paddleBottomMargin;
     paddle.x = Math.min(paddle.x || (cssW - paddle.w) / 2, cssW - paddle.w);
     paddle.targetX = paddle.x;
     ball.r = Math.max(6, cssW * 0.018);
@@ -87,20 +91,25 @@
     const rows = 5;
     const side = Math.max(12, cssW * 0.032);
     const gap = Math.max(4, cssW * 0.012);
-    const preferredTop = Math.max(28, Math.min(58, cssH * 0.075));
     const bw = (cssW - side * 2 - gap * (cols - 1)) / cols;
 
-    // 最下段ブロックとバーの間に、最低でも「ブロック5個分」の
-    // 空間を確保する。画面が低い場合はブロックの高さを自動調整する。
-    const availableHeight =
-      paddle.y - preferredTop - gap * (rows - 1);
-    const bh = Math.max(9, Math.min(28, availableHeight / (rows + 5)));
+    // ブロック群は上側に置き、最下段とバーの間には
+    // 以前よりさらに約5ブロック分広いプレイ空間を確保する。
+    // 低い画面ではブロックだけを少し薄くして、距離を優先する。
+    const top = Math.max(8, Math.min(24, cssH * 0.035));
+    const desiredPlaySpace = Math.max(145, Math.min(195, cssH * 0.56));
+    const heightForBricks =
+      paddle.y - top - desiredPlaySpace - gap * (rows - 1);
+    const bh = Math.max(8, Math.min(24, heightForBricks / rows));
+
     const brickGroupHeight = rows * bh + gap * (rows - 1);
-    const requiredPlaySpace = bh * 5;
-    const top = Math.max(
-      14,
-      Math.min(preferredTop, paddle.y - brickGroupHeight - requiredPlaySpace)
-    );
+    const actualPlaySpace = paddle.y - (top + brickGroupHeight);
+
+    // 非常に低い画面でもバーとの距離を優先するため、
+    // 必要ならブロック開始位置をさらに上へ詰める。
+    const adjustedTop = actualPlaySpace < desiredPlaySpace
+      ? Math.max(3, top - (desiredPlaySpace - actualPlaySpace))
+      : top;
 
     const patterns = [
       () => true,
@@ -117,7 +126,7 @@
         if (!pattern(r, c)) continue;
         bricks.push({
           x: side + c * (bw + gap),
-          y: top + r * (bh + gap),
+          y: adjustedTop + r * (bh + gap),
           w: bw,
           h: bh,
           row: r,
