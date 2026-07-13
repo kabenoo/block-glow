@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Block Glow" />
+  <title>Block Glow</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">MOBILE BREAKOUT</p>
+        <h1>BLOCK GLOW</h1>
+      </div>
+      <button id="soundButton" class="icon-button" aria-label="サウンド切替">🔊</button>
+    </header>
+
+    <section class="stats" aria-label="ゲーム情報">
+      <div class="stat-card">
+        <span>得点</span>
+        <strong id="score">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>最高</span>
+        <strong id="highScore">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>面</span>
+        <strong id="level">1</strong>
+      </div>
+      <div class="stat-card">
+        <span>残球</span>
+        <strong id="lives">3</strong>
+      </div>
+    </section>
+
+    <section class="game-frame">
+      <canvas id="gameCanvas" aria-label="ブロック崩しゲーム"></canvas>
+
+      <div id="startScreen" class="overlay visible">
+        <div class="panel">
+          <p class="panel-kicker">難易度を選択</p>
+          <h2>指でバーを動かそう</h2>
+          <p class="panel-copy">画面を左右になぞるとバーが動きます。タップで球を発射します。</p>
+          <div class="difficulty-list">
+            <button class="difficulty-button" data-difficulty="beginner">
+              <span>初心者</span><small>ゆっくり・追いやすい</small>
+            </button>
+            <button class="difficulty-button selected" data-difficulty="normal">
+              <span>中級者</span><small>標準スピード</small>
+            </button>
+            <button class="difficulty-button" data-difficulty="advanced">
+              <span>上級者</span><small>速め・加速も強い</small>
+            </button>
+          </div>
+          <button id="startButton" class="primary-button">ゲーム開始</button>
+        </div>
+      </div>
+
+      <div id="messageScreen" class="overlay">
+        <div class="panel compact">
+          <p id="messageKicker" class="panel-kicker">READY</p>
+          <h2 id="messageTitle">タップで発射</h2>
+          <p id="messageText" class="panel-copy">球は少しずつ速くなります。</p>
+          <button id="messageButton" class="primary-button">続ける</button>
+        </div>
+      </div>
+
+      <button id="pauseButton" class="pause-button" aria-label="一時停止">Ⅱ</button>
+    </section>
+
+    <p class="footer-note">指を置いたまま左右に動かすと、バーが滑らかに追従します。</p>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
