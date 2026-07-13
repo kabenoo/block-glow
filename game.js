@@ -16,7 +16,7 @@
   const soundButton = document.getElementById("soundButton");
 
   const DIFFICULTIES = {
-    beginner: { start: 210, max: 390, accel: 1.010, paddle: 0.26 },
+    beginner: { start: 210, max: 390, accel: 1.010, paddle: 0.26 }
     normal:   { start: 250, max: 470, accel: 1.014, paddle: 0.23 },
     advanced: { start: 290, max: 560, accel: 1.018, paddle: 0.20 }
   };
