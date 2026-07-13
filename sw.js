@@ -1,4 +1,4 @@
-const CACHE = "block-glow-v6";
+const CACHE = "block-glow-v7";
 const ASSETS = [
   "./",
   "index.html",
