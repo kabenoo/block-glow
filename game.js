@@ -1,5 +1,6 @@
 (() => {
   const canvas = document.getElementById("gameCanvas");
+  const gameFrame = document.querySelector(".game-frame");
   const ctx = canvas.getContext("2d");
   const scoreEl = document.getElementById("score");
   const highScoreEl = document.getElementById("highScore");
@@ -15,11 +16,31 @@
   const pauseButton = document.getElementById("pauseButton");
   const soundButton = document.getElementById("soundButton");
 
-  const DIFFICULTIES = {
-    beginner: { start: 120, max: 260, accel: 1.004, paddle: 0.26 },
-    normal:   { start: 250, max: 470, accel: 1.014, paddle: 0.23 },
-    advanced: { start: 290, max: 560, accel: 1.018, paddle: 0.20 }
+  // =====================================================
+  // 調整用設定：今後は基本的に、この部分の数字だけ変更します。
+  // =====================================================
+  const GAME_SETTINGS = {
+    // 最下段ブロックとバーの間隔（px）
+    PLAY_SPACE: 420,
+
+    // ブロック上端の余白を、ブロック何段分にするか
+    TOP_GAP_BLOCKS: 5,
+
+    // バー下端とゲーム画面下端の余白（px）
+    PADDLE_BOTTOM_MARGIN: 35,
+
+    // ブロックの縦の隙間（最低値は画面幅から自動計算）
+    BRICK_GAP_MIN: 4,
+
+    // 各難易度の速度とバーの長さ
+    DIFFICULTIES: {
+      beginner: { start: 90,  max: 220, accel: 1.002, paddle: 0.26 },
+      normal:   { start: 220, max: 420, accel: 1.010, paddle: 0.23 },
+      advanced: { start: 280, max: 540, accel: 1.016, paddle: 0.20 }
+    }
   };
+
+  const DIFFICULTIES = GAME_SETTINGS.DIFFICULTIES;
 
   const palettes = [
     ["#fb7185", "#f97316", "#facc15", "#34d399", "#38bdf8"],
@@ -63,6 +84,23 @@
   }
 
   function resize() {
+    // 設定値から必要なゲーム画面の高さを自動計算する。
+    // PLAY_SPACEを変更しても、style.cssを直す必要はありません。
+    const frameWidth = Math.max(1, gameFrame.getBoundingClientRect().width);
+    const estimatedBrickH = Math.max(10, Math.min(24, frameWidth * 0.038));
+    const estimatedGap = Math.max(GAME_SETTINGS.BRICK_GAP_MIN, frameWidth * 0.012);
+    const estimatedTop = estimatedBrickH * GAME_SETTINGS.TOP_GAP_BLOCKS;
+    const estimatedBrickGroup = 5 * estimatedBrickH + 4 * estimatedGap;
+    const estimatedPaddleH = 11;
+    const requiredHeight = Math.ceil(
+      estimatedTop +
+      estimatedBrickGroup +
+      GAME_SETTINGS.PLAY_SPACE +
+      estimatedPaddleH +
+      GAME_SETTINGS.PADDLE_BOTTOM_MARGIN
+    );
+    gameFrame.style.minHeight = `${requiredHeight}px`;
+
     const rect = canvas.getBoundingClientRect();
     cssW = Math.max(1, rect.width);
     cssH = Math.max(1, rect.height);
@@ -76,7 +114,7 @@
 
     // バーをプレイ領域の最下部近くに配置する。
     // y はバー上端なので、下端の余白とバー自体の高さを差し引く。
-    const paddleBottomMargin = Math.max(5, cssH * 0.018);
+    const paddleBottomMargin = GAME_SETTINGS.PADDLE_BOTTOM_MARGIN;
     paddle.y = cssH - paddle.h - paddleBottomMargin;
     paddle.x = Math.min(paddle.x || (cssW - paddle.w) / 2, cssW - paddle.w);
     paddle.targetX = paddle.x;
@@ -90,23 +128,23 @@
     const cols = 8;
     const rows = 5;
     const side = Math.max(12, cssW * 0.032);
-    const gap = Math.max(4, cssW * 0.012);
+    const gap = Math.max(GAME_SETTINGS.BRICK_GAP_MIN, cssW * 0.012);
     const bw = (cssW - side * 2 - gap * (cols - 1)) / cols;
 
     // ブロックの高さは、横幅に応じて一定範囲に収める。
     const bh = Math.max(10, Math.min(24, cssW * 0.038));
 
-    // 上側には「ブロック5段分」の空間を確保する。
-    const topGap = bh * 5;
-    const top = topGap;
+    // 上側の余白は設定したブロック段数で決める。
+    const top = bh * GAME_SETTINGS.TOP_GAP_BLOCKS;
 
-    // 最下段ブロックとバーの間は、常に1000px確保する。
+    // バーは画面下側に固定し、ブロックとの距離はPLAY_SPACEで決める。
+    // ゲーム画面の必要高さはresize()で自動確保する。
     const brickGroupHeight = rows * bh + gap * (rows - 1);
-    const requiredPaddleY = top + brickGroupHeight + 1000;
-
-    // バー位置が不足する場合は、キャンバス側の高さをCSSで確保する。
-    // 念のため計算上もバーを必要位置より下へ配置する。
-    paddle.y = Math.max(paddle.y, requiredPaddleY);
+    const lowestBrickBottom = top + brickGroupHeight;
+    paddle.y = Math.max(
+      lowestBrickBottom + GAME_SETTINGS.PLAY_SPACE,
+      cssH - paddle.h - GAME_SETTINGS.PADDLE_BOTTOM_MARGIN
+    );
 
     const patterns = [
       () => true,
