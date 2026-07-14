@@ -27,8 +27,11 @@
     // ブロックとバーの最低間隔（px）
     PLAY_SPACE_MIN: 150,
 
-    // ブロック上端の余白を、ブロック何段分にするか
-    TOP_GAP_BLOCKS: 0.6,
+    // ゲーム枠上端から最上段ブロックまでの余白。
+    // 赤矢印部分を以前の約3分の1にするため、画面高の約11%を基準にする。
+    TOP_MARGIN_RATIO: 0.11,
+    TOP_MARGIN_MIN: 24,
+    TOP_MARGIN_MAX: 120,
 
     // バー下端とゲーム画面下端の余白（px）
     PADDLE_BOTTOM_MARGIN: 12,
@@ -47,10 +50,10 @@
   const DIFFICULTIES = GAME_SETTINGS.DIFFICULTIES;
 
   const palettes = [
-    ["#fb7185", "#f97316", "#facc15", "#34d399", "#38bdf8"],
-    ["#c084fc", "#818cf8", "#38bdf8", "#2dd4bf", "#a3e635"],
-    ["#f472b6", "#fb7185", "#f59e0b", "#22c55e", "#06b6d4"],
-    ["#60a5fa", "#818cf8", "#a78bfa", "#e879f9", "#fb7185"]
+    ["#f472b6", "#fb7185", "#f97316", "#facc15", "#a3e635", "#34d399", "#38bdf8"],
+    ["#e879f9", "#c084fc", "#818cf8", "#60a5fa", "#38bdf8", "#2dd4bf", "#34d399"],
+    ["#fb7185", "#f97316", "#f59e0b", "#facc15", "#84cc16", "#22c55e", "#06b6d4"],
+    ["#a78bfa", "#818cf8", "#60a5fa", "#38bdf8", "#22d3ee", "#2dd4bf", "#34d399"]
   ];
 
   let cssW = 0, cssH = 0, dpr = 1;
@@ -120,46 +123,49 @@
 
   function createBricks() {
     const cols = 8;
-    const rows = 5;
+    const rows = 7;
     const side = Math.max(12, cssW * 0.032);
     const gap = Math.max(GAME_SETTINGS.BRICK_GAP_MIN, cssW * 0.012);
     const bw = (cssW - side * 2 - gap * (cols - 1)) / cols;
 
-    // ブロックの高さは、横幅に応じて一定範囲に収める。
-    let bh = Math.max(10, Math.min(24, cssW * 0.038));
-
-    // バーは必ず画面下端付近に固定する。
+    // バーは必ずゲーム枠の下端付近に固定する。
     paddle.y = cssH - paddle.h - GAME_SETTINGS.PADDLE_BOTTOM_MARGIN;
 
-    // ブロック群の高さ。
-    let brickGroupHeight = rows * bh + gap * (rows - 1);
+    // 赤矢印部分。画面サイズに応じて調整しつつ、以前より大幅に縮める。
+    const top = Math.max(
+      GAME_SETTINGS.TOP_MARGIN_MIN,
+      Math.min(GAME_SETTINGS.TOP_MARGIN_MAX, cssH * GAME_SETTINGS.TOP_MARGIN_RATIO)
+    );
 
-    // 希望する間隔を確保するため、ブロック群を上側へ配置する。
-    // 画面が低い場合でも、バーは動かさず、ブロックの高さだけを縮める。
-    const minimumTop = Math.max(8, bh * GAME_SETTINGS.TOP_GAP_BLOCKS);
-    const heightAvailableForBricks =
-      paddle.y - GAME_SETTINGS.PLAY_SPACE - minimumTop - gap * (rows - 1);
+    // 7段とバーまでの希望間隔を、現在のゲーム枠内へ収める。
+    // 収まらない場合は、バーを消さずにブロックの厚さを自動で薄くする。
+    const desiredSpace = GAME_SETTINGS.PLAY_SPACE;
+    const availableForBricks =
+      paddle.y - top - desiredSpace - gap * (rows - 1);
 
-    if (heightAvailableForBricks < rows * bh) {
-      bh = Math.max(7, Math.min(bh, heightAvailableForBricks / rows));
-      brickGroupHeight = rows * bh + gap * (rows - 1);
+    let bh = Math.max(7, Math.min(24, cssW * 0.038));
+    if (availableForBricks < rows * bh) {
+      bh = Math.max(6, availableForBricks / rows);
     }
 
-    const maximumSpace = Math.max(40, paddle.y - minimumTop - brickGroupHeight);
-    const actualSpace = Math.min(GAME_SETTINGS.PLAY_SPACE, maximumSpace);
+    let brickGroupHeight = rows * bh + gap * (rows - 1);
+    let actualSpace = paddle.y - top - brickGroupHeight;
 
-    // ブロック最下段とバーの間隔から逆算して、ブロック上端を決める。
-    const top = Math.max(
-      minimumTop,
-      paddle.y - brickGroupHeight - actualSpace
-    );
+    // 極端に低い画面では、間隔だけを安全範囲まで縮める。
+    if (actualSpace < GAME_SETTINGS.PLAY_SPACE_MIN) {
+      const roomForBricks =
+        paddle.y - top - GAME_SETTINGS.PLAY_SPACE_MIN - gap * (rows - 1);
+      bh = Math.max(5, roomForBricks / rows);
+      brickGroupHeight = rows * bh + gap * (rows - 1);
+      actualSpace = paddle.y - top - brickGroupHeight;
+    }
 
     const patterns = [
       () => true,
-      (r, c) => !(r === 2 && (c === 3 || c === 4)),
-      (r, c) => c >= r - 1 && c <= cols - r,
-      (r, c) => !((r + c) % 5 === 0),
-      (r, c) => !(r === 1 && (c === 1 || c === 6))
+      (r, c) => !(r === 3 && (c === 3 || c === 4)),
+      (r, c) => !(r === 1 && (c === 1 || c === 6)),
+      (r, c) => !((r + c) % 7 === 0),
+      (r, c) => !(r === 5 && (c === 2 || c === 5))
     ];
     const pattern = patterns[(level - 1) % patterns.length];
 
@@ -173,7 +179,8 @@
           w: bw,
           h: bh,
           row: r,
-          value: 5 - r,
+          // 上段7点、最下段1点。
+          value: rows - r,
           alive: true
         });
       }
