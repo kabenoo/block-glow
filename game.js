@@ -20,8 +20,12 @@
   // 調整用設定：今後は基本的に、この部分の数字だけ変更します。
   // =====================================================
   const GAME_SETTINGS = {
-    // 最下段ブロックとバーの間隔（px）
+    // 最下段ブロックとバーの目標間隔（px）
+    // 画面に収まらない場合は、自動的に縮小します。
     PLAY_SPACE: 420,
+
+    // ブロックとバーの最低間隔（px）
+    PLAY_SPACE_MIN: 220,
 
     // ブロック上端の余白を、ブロック何段分にするか
     TOP_GAP_BLOCKS: 5,
@@ -84,22 +88,13 @@
   }
 
   function resize() {
-    // 設定値から必要なゲーム画面の高さを自動計算する。
-    // PLAY_SPACEを変更しても、style.cssを直す必要はありません。
-    const frameWidth = Math.max(1, gameFrame.getBoundingClientRect().width);
-    const estimatedBrickH = Math.max(10, Math.min(24, frameWidth * 0.038));
-    const estimatedGap = Math.max(GAME_SETTINGS.BRICK_GAP_MIN, frameWidth * 0.012);
-    const estimatedTop = estimatedBrickH * GAME_SETTINGS.TOP_GAP_BLOCKS;
-    const estimatedBrickGroup = 5 * estimatedBrickH + 4 * estimatedGap;
-    const estimatedPaddleH = 11;
-    const requiredHeight = Math.ceil(
-      estimatedTop +
-      estimatedBrickGroup +
-      GAME_SETTINGS.PLAY_SPACE +
-      estimatedPaddleH +
-      GAME_SETTINGS.PADDLE_BOTTOM_MARGIN
-    );
-    gameFrame.style.minHeight = `${requiredHeight}px`;
+    // スマホの実際の表示領域内にゲーム画面を収める。
+    // Safariの下部バーが表示されていても、バーとボールが画面外へ出ない。
+    const viewportHeight = window.visualViewport?.height || window.innerHeight;
+    const frameTop = gameFrame.getBoundingClientRect().top;
+    const availableHeight = Math.max(360, viewportHeight - frameTop - 12);
+    gameFrame.style.height = `${availableHeight}px`;
+    gameFrame.style.minHeight = "0px";
 
     const rect = canvas.getBoundingClientRect();
     cssW = Math.max(1, rect.width);
@@ -111,17 +106,16 @@
 
     paddle.w = cssW * DIFFICULTIES[selectedDifficulty].paddle;
     paddle.h = Math.max(11, cssH * 0.018);
-
-    // バーをプレイ領域の最下部近くに配置する。
-    // y はバー上端なので、下端の余白とバー自体の高さを差し引く。
-    const paddleBottomMargin = GAME_SETTINGS.PADDLE_BOTTOM_MARGIN;
-    paddle.y = cssH - paddle.h - paddleBottomMargin;
-    paddle.x = Math.min(paddle.x || (cssW - paddle.w) / 2, cssW - paddle.w);
+    paddle.y = cssH - paddle.h - GAME_SETTINGS.PADDLE_BOTTOM_MARGIN;
+    paddle.x = Math.max(0, Math.min(
+      Number.isFinite(paddle.x) ? paddle.x : (cssW - paddle.w) / 2,
+      cssW - paddle.w
+    ));
     paddle.targetX = paddle.x;
     ball.r = Math.max(6, cssW * 0.018);
 
-    if (!launched) attachBall();
     createBricks();
+    if (!launched) attachBall();
   }
 
   function createBricks() {
@@ -132,19 +126,38 @@
     const bw = (cssW - side * 2 - gap * (cols - 1)) / cols;
 
     // ブロックの高さは、横幅に応じて一定範囲に収める。
-    const bh = Math.max(10, Math.min(24, cssW * 0.038));
+    let bh = Math.max(10, Math.min(24, cssW * 0.038));
 
     // 上側の余白は設定したブロック段数で決める。
-    const top = bh * GAME_SETTINGS.TOP_GAP_BLOCKS;
+    let top = bh * GAME_SETTINGS.TOP_GAP_BLOCKS;
+    let brickGroupHeight = rows * bh + gap * (rows - 1);
 
-    // バーは画面下側に固定し、ブロックとの距離はPLAY_SPACEで決める。
-    // ゲーム画面の必要高さはresize()で自動確保する。
-    const brickGroupHeight = rows * bh + gap * (rows - 1);
-    const lowestBrickBottom = top + brickGroupHeight;
-    paddle.y = Math.max(
-      lowestBrickBottom + GAME_SETTINGS.PLAY_SPACE,
-      cssH - paddle.h - GAME_SETTINGS.PADDLE_BOTTOM_MARGIN
+    // バーは必ず画面下端付近に置く。
+    paddle.y = cssH - paddle.h - GAME_SETTINGS.PADDLE_BOTTOM_MARGIN;
+
+    // PLAY_SPACEは目標値。画面に入らない場合は最低値まで自動縮小する。
+    const maximumSpace = Math.max(
+      40,
+      paddle.y - top - brickGroupHeight
     );
+    const actualSpace = Math.max(
+      Math.min(GAME_SETTINGS.PLAY_SPACE_MIN, maximumSpace),
+      Math.min(GAME_SETTINGS.PLAY_SPACE, maximumSpace)
+    );
+
+    // それでも収まらない小さい画面では、ブロックを少し小さくする。
+    if (maximumSpace < GAME_SETTINGS.PLAY_SPACE_MIN) {
+      const usableForBricks = Math.max(
+        70,
+        paddle.y - GAME_SETTINGS.PLAY_SPACE_MIN
+      );
+      bh = Math.max(8, Math.min(
+        bh,
+        usableForBricks / (rows + GAME_SETTINGS.TOP_GAP_BLOCKS + 0.8)
+      ));
+      top = bh * GAME_SETTINGS.TOP_GAP_BLOCKS;
+      brickGroupHeight = rows * bh + gap * (rows - 1);
+    }
 
     const patterns = [
       () => true,
