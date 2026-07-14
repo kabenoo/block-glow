@@ -22,16 +22,16 @@
   const GAME_SETTINGS = {
     // 最下段ブロックとバーの目標間隔（px）
     // 画面に収まらない場合は、自動的に縮小します。
-    PLAY_SPACE: 420,
+    PLAY_SPACE: 185,
 
     // ブロックとバーの最低間隔（px）
-    PLAY_SPACE_MIN: 220,
+    PLAY_SPACE_MIN: 150,
 
     // ブロック上端の余白を、ブロック何段分にするか
-    TOP_GAP_BLOCKS: 5,
+    TOP_GAP_BLOCKS: 0.6,
 
     // バー下端とゲーム画面下端の余白（px）
-    PADDLE_BOTTOM_MARGIN: 35,
+    PADDLE_BOTTOM_MARGIN: 12,
 
     // ブロックの縦の隙間（最低値は画面幅から自動計算）
     BRICK_GAP_MIN: 4,
@@ -128,36 +128,31 @@
     // ブロックの高さは、横幅に応じて一定範囲に収める。
     let bh = Math.max(10, Math.min(24, cssW * 0.038));
 
-    // 上側の余白は設定したブロック段数で決める。
-    let top = bh * GAME_SETTINGS.TOP_GAP_BLOCKS;
-    let brickGroupHeight = rows * bh + gap * (rows - 1);
-
-    // バーは必ず画面下端付近に置く。
+    // バーは必ず画面下端付近に固定する。
     paddle.y = cssH - paddle.h - GAME_SETTINGS.PADDLE_BOTTOM_MARGIN;
 
-    // PLAY_SPACEは目標値。画面に入らない場合は最低値まで自動縮小する。
-    const maximumSpace = Math.max(
-      40,
-      paddle.y - top - brickGroupHeight
-    );
-    const actualSpace = Math.max(
-      Math.min(GAME_SETTINGS.PLAY_SPACE_MIN, maximumSpace),
-      Math.min(GAME_SETTINGS.PLAY_SPACE, maximumSpace)
-    );
+    // ブロック群の高さ。
+    let brickGroupHeight = rows * bh + gap * (rows - 1);
 
-    // それでも収まらない小さい画面では、ブロックを少し小さくする。
-    if (maximumSpace < GAME_SETTINGS.PLAY_SPACE_MIN) {
-      const usableForBricks = Math.max(
-        70,
-        paddle.y - GAME_SETTINGS.PLAY_SPACE_MIN
-      );
-      bh = Math.max(8, Math.min(
-        bh,
-        usableForBricks / (rows + GAME_SETTINGS.TOP_GAP_BLOCKS + 0.8)
-      ));
-      top = bh * GAME_SETTINGS.TOP_GAP_BLOCKS;
+    // 希望する間隔を確保するため、ブロック群を上側へ配置する。
+    // 画面が低い場合でも、バーは動かさず、ブロックの高さだけを縮める。
+    const minimumTop = Math.max(8, bh * GAME_SETTINGS.TOP_GAP_BLOCKS);
+    const heightAvailableForBricks =
+      paddle.y - GAME_SETTINGS.PLAY_SPACE - minimumTop - gap * (rows - 1);
+
+    if (heightAvailableForBricks < rows * bh) {
+      bh = Math.max(7, Math.min(bh, heightAvailableForBricks / rows));
       brickGroupHeight = rows * bh + gap * (rows - 1);
     }
+
+    const maximumSpace = Math.max(40, paddle.y - minimumTop - brickGroupHeight);
+    const actualSpace = Math.min(GAME_SETTINGS.PLAY_SPACE, maximumSpace);
+
+    // ブロック最下段とバーの間隔から逆算して、ブロック上端を決める。
+    const top = Math.max(
+      minimumTop,
+      paddle.y - brickGroupHeight - actualSpace
+    );
 
     const patterns = [
       () => true,

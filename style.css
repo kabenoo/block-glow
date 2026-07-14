@@ -262,3 +262,35 @@ canvas {
   .footer-note { display: none; }
   .panel { padding-top: 18px; }
 }
+
+
+/* 縦が短い画面では上部表示を圧縮し、ゲーム領域を広げる */
+@media (max-height: 720px) {
+  .app-shell {
+    padding-top: max(5px, env(safe-area-inset-top));
+    padding-right: 8px;
+    padding-bottom: max(5px, env(safe-area-inset-bottom));
+    padding-left: 8px;
+    gap: 4px;
+  }
+
+  .topbar { min-height: 42px; }
+  .eyebrow { font-size: 8px; margin-bottom: 0; }
+  h1 { font-size: 20px; }
+  .icon-button { width: 36px; height: 36px; border-radius: 11px; }
+
+  .stats { gap: 4px; }
+  .stat-card { padding: 4px 3px; border-radius: 10px; }
+  .stat-card span { font-size: 8px; }
+  .stat-card strong { margin-top: 0; font-size: 16px; }
+
+  .pause-button {
+    top: -43px;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+  }
+
+  .game-frame { border-radius: 18px; }
+  .footer-note { display: none; }
+}
