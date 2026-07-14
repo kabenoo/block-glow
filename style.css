@@ -112,7 +112,7 @@ h1 {
 .game-frame {
   position: relative;
   flex: 1;
-  min-height: 330px;
+  min-height: 1300px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 24px;
@@ -231,13 +231,18 @@ canvas {
   box-shadow: 0 12px 30px rgba(125,211,252,0.22);
 }
 
+.level-card {
+  position: relative;
+}
+
 .pause-button {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 3;
-  width: 42px;
-  height: 42px;
+  left: 50%;
+  top: -55px;
+  transform: translateX(-50%);
+  z-index: 8;
+  width: 44px;
+  height: 44px;
   border-radius: 14px;
   font-weight: 900;
 }

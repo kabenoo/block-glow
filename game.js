@@ -16,9 +16,9 @@
   const soundButton = document.getElementById("soundButton");
 
   const DIFFICULTIES = {
-    beginner: { start: 80, max: 200, accel: 1.004, paddle: 0.26 },
-    normal:   { start: 200, max: 400, accel: 1.010, paddle: 0.23 },
-    advanced: { start: 300, max: 500, accel: 1.016, paddle: 0.20 }
+    beginner: { start: 120, max: 260, accel: 1.004, paddle: 0.26 },
+    normal:   { start: 250, max: 470, accel: 1.014, paddle: 0.23 },
+    advanced: { start: 290, max: 560, accel: 1.018, paddle: 0.20 }
   };
 
   const palettes = [
@@ -93,23 +93,20 @@
     const gap = Math.max(4, cssW * 0.012);
     const bw = (cssW - side * 2 - gap * (cols - 1)) / cols;
 
-    // ブロック群は上側に置き、最下段とバーの間には
-    // 以前よりさらに約5ブロック分広いプレイ空間を確保する。
-    // 低い画面ではブロックだけを少し薄くして、距離を優先する。
-    const top = Math.max(8, Math.min(24, cssH * 0.035));
-    const desiredPlaySpace = Math.max(400, Math.min(480, cssH * 0.80));
-    const heightForBricks =
-      paddle.y - top - desiredPlaySpace - gap * (rows - 1);
-    const bh = Math.max(8, Math.min(24, heightForBricks / rows));
+    // ブロックの高さは、横幅に応じて一定範囲に収める。
+    const bh = Math.max(10, Math.min(24, cssW * 0.038));
 
+    // 上側には「ブロック5段分」の空間を確保する。
+    const topGap = bh * 5;
+    const top = topGap;
+
+    // 最下段ブロックとバーの間は、常に1000px確保する。
     const brickGroupHeight = rows * bh + gap * (rows - 1);
-    const actualPlaySpace = paddle.y - (top + brickGroupHeight);
+    const requiredPaddleY = top + brickGroupHeight + 1000;
 
-    // 非常に低い画面でもバーとの距離を優先するため、
-    // 必要ならブロック開始位置をさらに上へ詰める。
-    const adjustedTop = actualPlaySpace < desiredPlaySpace
-      ? Math.max(3, top - (desiredPlaySpace - actualPlaySpace))
-      : top;
+    // バー位置が不足する場合は、キャンバス側の高さをCSSで確保する。
+    // 念のため計算上もバーを必要位置より下へ配置する。
+    paddle.y = Math.max(paddle.y, requiredPaddleY);
 
     const patterns = [
       () => true,
@@ -126,7 +123,7 @@
         if (!pattern(r, c)) continue;
         bricks.push({
           x: side + c * (bw + gap),
-          y: adjustedTop + r * (bh + gap),
+          y: top + r * (bh + gap),
           w: bw,
           h: bh,
           row: r,
